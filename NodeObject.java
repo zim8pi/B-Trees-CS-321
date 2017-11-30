@@ -2,6 +2,13 @@
 public class NodeObject{
 	private long key;
 	private int frequency;
+	
+	public NodeObject (long k, int f)
+	{
+		setKey(k);
+		setFrequency(f);
+	}
+	
 	/**
 	 * @return the key
 	 */
