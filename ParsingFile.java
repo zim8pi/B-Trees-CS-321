@@ -114,12 +114,13 @@ public class ParsingFile {
 		DNA = new NodeObject[totalSequences];
 		Long currentSequence;
 		int DNASize = 0;  //so I only have to search through indexes with information in them
-		boolean needsToBeAdded = true;
+		boolean needsToBeAdded;
 		
 		//while there are still sequences to be added
 		while (allSequences != null)
 		{
 			currentSequence = allSequences.remove();
+			needsToBeAdded = true;
 			
 			//check if currentSequence is already in DNA
 			int i = 0;
