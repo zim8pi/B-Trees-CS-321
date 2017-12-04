@@ -3,6 +3,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import BTree.BTreeNode;
+
 
 
 public class MemoryAccess {
@@ -50,10 +52,29 @@ private int children;
 			}
 		}
 	}
+	public void writeNode(BTree.BTreeNode zero){
+		try {
+			rmFile.writeLong(zero.getKey(0));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	//reserves space in the file for the Node
 	public BTree.BTreeNode allocateNode() {
 		//can use writeNode to create empty node, need to set position likely at the end of the file
-		return null;
+		node = tree.new BTreeNode(degree, 0);
+		node.add(0);
+		try {
+			writePosition(rmFile.length());
+			writeNode(node);
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return node;
 	}
 	//get metadata
 	public int readDegree() {
@@ -64,11 +85,16 @@ private int children;
 		node.setDegree(degree);
 	}
 	//get metadata
-	public int readPosition() {
-		return 0;
+	public int readPosition() throws IOException {
+		return rmFile.getFilePointer();
 	}
 	//write metadata
 	public void writePosition() {
-		
+		try {
+			rmFile.seek(pos);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
