@@ -129,8 +129,8 @@ public class BTree {
 	
 	//had to make it public for the MemoryAccess file.
 	public static class BTreeNode {
-		private NodeObject[] nodePairs;
-		private BTreeNode[] children;
+		private NodeObject[] nodePairs;  //holds the key-value pairs
+		private int[] children;
 		private int parent;
 		private int degree;
 		private int numKeys;
