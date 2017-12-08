@@ -1,93 +1,104 @@
+import java.io.File;
 
 public class BTree {
-	private static int degree;
+	private int degree;
+	private int sequenceLength;
 	private BTreeNode root;
-	private int height;
-	private BTreeNode[] nodes;
+	private MemoryAccess rm;
+	private File file;
 	
-	public BTree() {
+
+	
+	public BTree(File file) {
+		this.file = file;
+		rm = new MemoryAccess(file, degree);
 		
 	}
 	
-	public void bTreeSearch(BTreeNode x, long key) {
+	public NodeObject bTreeSearch(BTreeNode x, long key) {
 		int i = 1;
-		while (i <= x.getNumKeys() && k > x.getKey(i)) {
+		while (i <= x.getNumKeys() && key > x.getKey(i)) {
 			i = i+1;
 		}
 		
-		if(i < x.getNumKeys() && k == x.getKey(i)) {
-			return x, i;
+		if(i < x.getNumKeys() && key == x.getKey(i)) {
+			return x.getObject(i);
 		} else if(x.isLeaf()) {
 			return null;
 		}else {
 			//not sure how to implement this... but, the disk needs to read the child of node x, and then re-search for it using 
 			// x.child(i) (where i is the index of the child), and use the key of the child to recursively search through the tree
-			readNode(x.children(i));
-			return bTreeSearch(x.children(i), x.children.getKey())
+			rm.readNode(x.getChild(i));
+			return bTreeSearch(x.getChild(i), x.getChild(i).getKey(i));
 		}
 		
 	}
 	public void bTreeInsertNonFull(BTreeNode x, long k) {
 		int i = x.getNumKeys();
 		if(x.isLeaf()) {
-			while(i >= 1 && k < x.key(i)) {
-				x.key(i+1) = x.key(i);
+			while(i >= 1 && k < x.getKey(i)) {
+				x.getObject(i+1).setKey(x.getObject(i).getKey());
 				i--;
 			}
-			x.setKey(i+1, k);
+			x.getObject(i+1).setKey(k);
 			x.setNumKeys(x.getNumKeys() + 1);
-			writeNode(x);
+			rm.writeNode(x);
 		}else {
-			while(i >= 1 && k < x.key(i)) {
+			while(i >= 1 && k < x.getKey(i)) {
 				i--;
 			}
 			i++;
-			readNode(x.getChild(i));
+			rm.readNode(x.getChild(i));
 			if(x.getChild(i).getNumKeys() == (2*degree - 1)) {
 				bTreeSplitChild(x, i);
-				if(k > x.key(i)) {
+				if(k > x.getKey(i)) {
 					i = i+1;
 				}
 			}
-			bTreeInsertNonFull(x.child(i), k);
+			bTreeInsertNonFull(x.getChild(i), k);
 		}
 		
 	}
 	
 	public void bTreeInsert(BTree T, long key) {
-		BTreeNode r = new BTreeNode();
-		BTreeNode s = new BTreeNode();
+		BTreeNode r = new BTreeNode(degree, null);
+		BTreeNode s = new BTreeNode(degree, null);
 		r = T.root;
+		r.setPosition(0);
 		if (r.getNumKeys() == (2*degree - 1)) {
-			s = allocateNode();
+			s = rm.allocateNode();
 			T.root = s;
-			s.isLeaf() = false;
+			s.setPosition(0);
+			s.setLeaf(false);
 			s.setNumKeys(0);
-			s.addChild(r);
+			s.setChild(r, 0);
+			r.setParent(0);
+			r.setPosition(1);
 			bTreeSplitChild(s, 1);
-			bTreeInsertNonFull(s, s.key);
+			bTreeInsertNonFull(s, key);
 		}else {
-			bTreeInsertNonFull(r, r.key);
+			bTreeInsertNonFull(r, key);
 		}
 	}
 	
-	public void bTreeCreate() {
-		BTree T = new BTree();
-		BTreeNode x = new BTreeNode();
-		x = allocateNode();
-		x.children() = 0;
-		x.isLeaf();
-		writeNode(x);
+	public void bTreeCreate(BTree T) {
+		BTreeNode x = new BTreeNode(degree, -1);
+		x = rm.allocateNode();
+		x.setChild(x, 0);
+		x.setLeaf(false);
+		rm.writeNode(x);
 		T.root = x;
+		x.setPosition(0);
 	}
 	//This is definitely not done. There's a lot of stuff that requires accessing the child of nodes, and I'm drawing a blank on how to do that
 	public void bTreeSplitChild(BTreeNode x, int i) {
 		BTreeNode z = new BTreeNode();
 		BTreeNode y = new BTreeNode();
 		int j;
-		y = x.children();
-		z.isLeaf() = y.isLeaf();
-		z.setNumKeys() = degree - 1;
+		y = x.getChild(0);
+		z.setLeaf(true);
+		y.setLeaf(true);
+		z.setNumKeys(2*degree);
 		for(j = 1; j < z.getNumKeys(); j++) {
 			z.getKey(j) = y.getKey(j + degree);
 		}
@@ -107,21 +118,31 @@ public class BTree {
 		}
 		x.key(i) = y.key(degree);
 		x.setNumKeys(x.getNumKeys()+1);
-		writeNode(y);
-		writeNode(z);
-		writeNode(x);
+		rm.writeNode(y);
+		rm.writeNode(z);
+		rm.writeNode(x);
+	}
+	
+	public long convertOffset() {
+		return 40*degree + 13;
 	}
 	
 	//had to make it public for the MemoryAccess file.
-	public class BTreeNode {
+	public static class BTreeNode {
 		private NodeObject[] nodePairs;
-		private int[] children;
+		private BTreeNode[] children;
 		private int parent;
+		private int degree;
 		private int numKeys;
+		private int maxPairs;
+		private int maxChildren;
 		private int position; //for metadata
+		private boolean leaf;
 		
 		public BTreeNode(int degree, int parent) {
-			BTree.degree = degree;
+			maxChildren = 2*degree;
+			maxPairs = 2*degree-1;
+			this.degree = degree;
 			this.parent = parent;
 		}
 			
@@ -130,7 +151,7 @@ public class BTree {
 		}
 		//I added this and the setChild because I think we need to be able to acces the children to each node, but 
 		//again, I'm not too sure how to implement it
-		public void getChild(int i) {
+		public BTreeNode getChild(int i) {
 			return children[i];
 		}
 		
@@ -138,10 +159,17 @@ public class BTree {
 			children[i] = x;
 		}
 		
-		public void setDegree(int degree) {
-			BTree.degree = degree;
+		public int getChildren() {
+			return children.length;
 		}
 		
+		public void setDegree(int degree) {
+			this.degree = degree;
+		}
+		
+		public void setLeaf(boolean leafy) {
+			leaf = leafy;
+		}
 		
 		public boolean isLeaf() {
 			if (children.length == 0)
@@ -162,22 +190,47 @@ public class BTree {
 				}
 				nodePairs[i].setKey(data);
 			}
+			numKeys++;
 		}
 		
 		public int getParent() {
 			return parent;
 		}
 		
+		public void setParent(int dad) {
+			parent = dad;
+		}
+		
+		public NodeObject getObject(int i) {
+			return nodePairs[i];
+		}
+		
 		public long getKey(int child) {
 			return nodePairs[child].getKey();
 		}
 		
-		public void getNumKeys() {
+		public int getNumKeys() {
 			return numKeys;
 		}
 		
 		public void setNumKeys(int k) {
 			numKeys = k;
+		}
+		
+		public int getMaxChildren() {
+			return maxChildren;
+		}
+		
+		public int getMaxPairs() {
+			return maxPairs;
+		}
+		
+		public int getPosition() {
+			return position;
+		}
+		
+		public void setPosition(int pos) {
+			position = pos;
 		}
 			
 	}

@@ -3,15 +3,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import BTree.BTreeNode;
-
 
 
 public class MemoryAccess {
 private RandomAccessFile rmFile;
 private int degree;
-private BTree tree = new BTree();
-private BTree.BTreeNode node; //any instance of BTreeNode needs to be BTree.BTreeNode
+//private BTree tree = new BTree();
+private BTree.BTreeNode node, parent; //any instance of BTreeNode needs to be BTree.BTreeNode
 
 private int children;
 
@@ -27,21 +25,21 @@ private int children;
 		}
 	}
 	
-	public BTree.BTreeNode readNode() {
+	public BTree.BTreeNode readNode(int offset) {
 		for (int i = 0; i < children; i++) {
-		node = tree.new BTreeNode(degree, 0);
+		
 		try {
 			long data = rmFile.readLong();
-			node.add(data);
+			this.node.add(data);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			}
 		}
-		return node;
+		return this.node;
 	}
 	
-	public void writeNode() {
+	public void writeNode(BTree.BTreeNode node) {
 		for(int i = 0; i < children; i++) {
 			long data = node.getKey(i);
 			try {
@@ -52,22 +50,17 @@ private int children;
 			}
 		}
 	}
-	public void writeNode(BTree.BTreeNode zero){
-		try {
-			rmFile.writeLong(zero.getKey(0));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+
 	//reserves space in the file for the Node
 	public BTree.BTreeNode allocateNode() {
 		//can use writeNode to create empty node, need to set position likely at the end of the file
-		node = tree.new BTreeNode(degree, 0);
-		node.add(0);
+		BTree.BTreeNode empty = new BTree.BTreeNode(degree, null);
+		for (int i = 0; i < empty.getMaxChildren(); i++) {
+			empty.add(0);
+		}
 		try {
 			writePosition(rmFile.length());
-			writeNode(node);
+			writeNode(empty);
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -85,11 +78,11 @@ private int children;
 		node.setDegree(degree);
 	}
 	//get metadata
-	public int readPosition() throws IOException {
+	public long readPosition() throws IOException {
 		return rmFile.getFilePointer();
 	}
 	//write metadata
-	public void writePosition() {
+	public void writePosition(long pos) {
 		try {
 			rmFile.seek(pos);
 		} catch (IOException e) {
