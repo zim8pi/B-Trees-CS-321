@@ -130,20 +130,25 @@ public class BTree
 			left.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), 0, (r.getNumKeys() / 2) - 1));
 			right.setChildren(Arrays.copyOfRange(r.getChildren(), r.getNumKeys() / 2, r.getNumKeys()));
 			right.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), r.getNumKeys() / 2, r.getNumKeys()));
-			r.setChildren(Arrays.copyOfRange(r.getChildren(), (r.getNumKeys() / 2) - 1, r.getNumKeys() / 2));
-			r.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), r.getNumKeys() / 2, r.getNumKeys()));
+			int[] temp = new int[2];
+			temp[0] = left.getPosition();
+			temp[1] = right.getPosition();
+			r.setChildren(temp);
+//			r.setChildren(Arrays.copyOfRange(r.getChildren(), (r.getNumKeys() / 2) - 1, r.getNumKeys() / 2));
+			r.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), (r.getNumKeys() / 2) - 1, r.getNumKeys() / 2));
+//			r.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), r.getNumKeys() / 2, r.getNumKeys()));
 						
 			
-			s = rm.allocateNode();
-			T.root = s;
-			s.setPosition(0);
-			s.setLeaf(false);
-			s.setNumKeys(0);
-			s.setChild(r, 0);
-			r.setParent(0);
-			r.setPosition(1);
-			bTreeSplitChild(s, 1);
-			bTreeInsertNonFull(s, key);
+//			s = rm.allocateNode();
+//			T.root = s;
+//			s.setPosition(0);
+//			s.setLeaf(false);
+//			s.setNumKeys(0);
+//			s.setChilden();
+			r.setParent(-1);
+			r.setPosition(0);
+			bTreeSplitChild(r, 1);
+			bTreeInsertNonFull(r, key);
 		}
 		else 
 		{
@@ -152,42 +157,39 @@ public class BTree
 	}
 	
 	public void bTreeCreate(BTree T) {
-		BTreeNode x = new BTreeNode(degree, -1);
+		BTreeNode x = new BTreeNode(degree, -1, 0, true);
 		x = rm.allocateNode();
-		x.setChild(x, 0);
-		x.setLeaf(false);
 		rm.writeNode(x);
 		T.root = x;
-		x.setPosition(0);
 	}
 	
 	//This is definitely not done. There's a lot of stuff that requires accessing the child of nodes, and I'm drawing a blank on how to do that
 	public void bTreeSplitChild(BTreeNode x, int i) {
-		BTreeNode z = new BTreeNode();
-		BTreeNode y = new BTreeNode();
+		BTreeNode z = new BTreeNode(degree,x.getPosition(), numOfNodes, true);
+		numOfNodes++;
+		BTreeNode y = new BTreeNode(degree, x.getPosition(), numOfNodes, true);
+		numOfNodes++;
 		int j;
-		y = x.getChild(0);
-		z.setLeaf(true);
-		y.setLeaf(true);
+		x.setChild(y.getPosition(), i);
 		z.setNumKeys(2*degree);
 		for(j = 1; j < z.getNumKeys(); j++) {
-			z.getKey(j) = y.getKey(j + degree);
+			z.setKeyPair(j,y.getKeyPair(j+degree));
 		}
 		if(!y.isLeaf()) {
 			for (j = 1; j < degree; j++) {
-				z.child(j) = y.child(j+degree);
+				z.setChild(j, y.getChild(j+degree));
 			}
 		}
 		y.setNumKeys(degree-1);
 		
 		for (j = x.getNumKeys() +1; j > i+1; j--) {
-			x.child(j+1) = x.child(j);
+			x.setChild(j+1, x.getChild(j));
 		}
-		x.child(i+1) = z;
+		x.setChild(i+1,z.getPosition());
 		for (j = x.getNumKeys(); j > i; j--) {
-			x.key(j+1) = x.key(j);
+			x.setKeyPair(j+1, x.getKeyPair(j));
 		}
-		x.key(i) = y.key(degree);
+		x.setKeyPair(i, y.getKeyPair(degree));
 		x.setNumKeys(x.getNumKeys()+1);
 		rm.writeNode(y);
 		rm.writeNode(z);

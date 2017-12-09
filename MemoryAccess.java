@@ -30,7 +30,7 @@ private int children;
 		
 		try {
 			long data = rmFile.readLong();
-			this.node.add(data);
+			this.node.addKeyPair(data, rmFile.readInt());
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -54,9 +54,9 @@ private int children;
 	//reserves space in the file for the Node
 	public BTree.BTreeNode allocateNode() {
 		//can use writeNode to create empty node, need to set position likely at the end of the file
-		BTree.BTreeNode empty = new BTree.BTreeNode(degree, null);
-		for (int i = 0; i < empty.getMaxChildren(); i++) {
-			empty.add(0);
+		BTree.BTreeNode empty = new BTree.BTreeNode(degree, 0, 0, false);
+		for (int i = 0; i < empty.getNumKeys(); i++) {
+			empty.setKeyPair(0, null);
 		}
 		try {
 			writePosition(rmFile.length());
@@ -71,11 +71,11 @@ private int children;
 	}
 	//get metadata
 	public int readDegree() {
-		return node.getDegree();
+		return degree;
 	}
 	//write metadata
 	public void writeDegree(int degree) {
-		node.setDegree(degree);
+		this.degree = degree;
 	}
 	//get metadata
 	public long readPosition() throws IOException {
