@@ -69,7 +69,7 @@ public class BTree
 		}
 		else 
 		{
-			//key was not found but not at leaf yet
+			//key was not found but not at leaf yet - continue searching tree
 			//the disk needs to read the child of node x, and then re-search for it using x.child(i)
 			//(where i is the index of the child), and recursively search through the tree
 			return bTreeSearch(node.getChild(i), key);
@@ -81,15 +81,24 @@ public class BTree
 	 * @param x - BTreeNode key is inserted into
 	 * @param k - NodeObject being inserted
 	 */
-	public void bTreeInsertNonFull(BTreeNode x, NodeObject k) 
+	public void bTreeInsertNonFull(int p, NodeObject k) 
 	{
+		BTreeNode x = rm.readNode(p);
 		int i = x.getNumKeys() - 1;
 		
 		if(x.isLeaf()) 
 		{
-			//TODO check for max number of key-value pairs in x
-			x.addKeyPair(k.getKey(), k.getFrequency());
-			rm.writeNode(x);
+			//if max number of key-value pairs is not reached
+			if (x.getNumKeys() < 2 * degree - 1)
+			{
+				x.addKeyPair(k);
+				rm.writeNode(x);
+			}
+			else
+			{
+				bTreeSplitNode(x.getPosition());
+				bTreeInsertNonFull(x.getParent(), k);
+			}
 		}
 		else 
 		{
@@ -102,16 +111,17 @@ public class BTree
 			BTreeNode child = rm.readNode(x.getChild(i));
 			if(child.getNumKeys() == (2*degree - 1)) 
 			{
-				bTreeSplitChild(x, i);
-				if(k.getKey() > x.getKey(i)) {
-					i = i + 1;
-				}
-				//TODO might have to reset child to the correct node after splitting
+				bTreeSplitNode(child.getPosition());
+				bTreeInsertNonFull(x.getPosition(), k);
 			}
-			bTreeInsertNonFull(child, k);
+			else
+			{
+				bTreeInsertNonFull(child.getPosition(), k);
+			}
 		}		
 	}
 	
+	//Do we even need this method????
 	public void bTreeInsert(BTree T, NodeObject key) 
 	{
 		BTreeNode r = T.getRoot();
@@ -147,53 +157,77 @@ public class BTree
 //			s.setChilden();
 			r.setParent(-1);
 			r.setPosition(0);
-			bTreeSplitChild(r, 1);
-			bTreeInsertNonFull(r, key);
+			bTreeSplitNode(r.getPosition());
+			bTreeInsertNonFull(r.getPosition(), key);
 		}
 		else 
 		{
-			bTreeInsertNonFull(r, key);
+			bTreeInsertNonFull(r.getPosition(), key);
 		}
 	}
 	
-	public void bTreeCreate(BTree T) {
-		BTreeNode x = new BTreeNode(degree, -1, 0, true);
+	/**
+	 * Creates an empty root node
+	 */
+	public void bTreeCreate() {
+		BTreeNode x = new BTreeNode(degree, -1, numOfNodes, true);
 		x = rm.allocateNode();
 		rm.writeNode(x);
-		T.root = x;
+		root = x;
+		numOfNodes++;
 	}
 	
-	//This is definitely not done. There's a lot of stuff that requires accessing the child of nodes, and I'm drawing a blank on how to do that
-	public void bTreeSplitChild(BTreeNode x, int i) {
-		BTreeNode z = new BTreeNode(degree,x.getPosition(), numOfNodes, true);
-		numOfNodes++;
-		BTreeNode y = new BTreeNode(degree, x.getPosition(), numOfNodes, true);
-		numOfNodes++;
-		int j;
-		x.setChild(y.getPosition(), i);
-		z.setNumKeys(2*degree);
-		for(j = 1; j < z.getNumKeys(); j++) {
-			z.setKeyPair(j,y.getKeyPair(j+degree));
+	/**
+	 * Splitss a node
+	 * @param nodePosition - position of the node being split
+	 */
+	public void bTreeSplitNode(int nodePosition) {	
+		BTreeNode splittingNode = rm.readNode(nodePosition);  //node that is being split
+				
+		//get the new node - will be directly to the right of the split node
+		BTreeNode right = new BTreeNode(degree, splittingNode.getParent(), numOfNodes, true);
+		numOfNodes++;		
+		right.setChildren(Arrays.copyOfRange(splittingNode.getChildren(), (int) Math.floor(splittingNode.getNumKeys() / 2) + 1, splittingNode.getNumKeys()));
+		right.setAllKeyPairs(Arrays.copyOfRange(splittingNode.getAllKeyPairs(), (int) Math.floor(splittingNode.getNumKeys() / 2) + 1, splittingNode.getNumKeys()));
+		right.setNumKeys(splittingNode.getNumKeys() - ((int) Math.floor(splittingNode.getNumKeys() / 2) + 1));	
+		
+		//if right has children (right is not a leaf)
+		if (right.getChild(0) != -2)
+		{
+			right.setLeaf(false);
 		}
-		if(!y.isLeaf()) {
-			for (j = 1; j < degree; j++) {
-				z.setChild(j, y.getChild(j+degree));
+		
+		//if split node is not the root
+		if (splittingNode.getParent() != -1)
+		{
+			BTreeNode parent = rm.readNode(splittingNode.getParent());  //node's parent
+			
+			//if parent is full
+			if (parent.getNumKeys() >= (2 * degree) - 1)
+			{
+				bTreeSplitNode(parent.getPosition());
+			}
+			else
+			{
+				int addSpot = parent.addKeyPair(splittingNode.getKeyPair((int) Math.floor(splittingNode.getNumKeys() / 2)));
+				parent.addChild(right.getPosition(), addSpot + 1);
 			}
 		}
-		y.setNumKeys(degree-1);
+		else
+		{
+			BTreeNode parent = new BTreeNode(degree, -1, numOfNodes, false);
+			numOfNodes++;
+			root = parent;
+			splittingNode.setParent(parent.getPosition());
+			right.setParent(parent.getPosition());
+			parent.setChildren(new int[]{splittingNode.getPosition(), right.getPosition()});
+			parent.addKeyPair(splittingNode.getKeyPair((int) Math.floor(splittingNode.getNumKeys() / 2)));
+		}
 		
-		for (j = x.getNumKeys() +1; j > i+1; j--) {
-			x.setChild(j+1, x.getChild(j));
-		}
-		x.setChild(i+1,z.getPosition());
-		for (j = x.getNumKeys(); j > i; j--) {
-			x.setKeyPair(j+1, x.getKeyPair(j));
-		}
-		x.setKeyPair(i, y.getKeyPair(degree));
-		x.setNumKeys(x.getNumKeys()+1);
-		rm.writeNode(y);
-		rm.writeNode(z);
-		rm.writeNode(x);
+		//update split node
+		splittingNode.setChildren(Arrays.copyOfRange(splittingNode.getChildren(), 0, (int) Math.floor(splittingNode.getNumKeys() / 2)));
+		splittingNode.setAllKeyPairs(Arrays.copyOfRange(splittingNode.getAllKeyPairs(), 0, (int) Math.floor(splittingNode.getNumKeys() / 2)));		
+		splittingNode.setNumKeys((int) Math.floor(splittingNode.getNumKeys() / 2));
 	}
 	
 	
@@ -223,6 +257,10 @@ public class BTree
 			parent = dad;
 			nodePairs = new NodeObject[2 * d - 1];
 			children = new int[2 * d];
+			for (int i = 0; i < 2 * d; i++)
+			{
+				children[i] = -2;
+			}
 			numKeys = 0;
 			position = spot;
 			leaf = l;
@@ -234,31 +272,6 @@ public class BTree
 		public boolean isLeaf() 
 		{
 			return leaf;
-		}
-		
-		/**
-		 * Adds a key-value pair to the node
-		 * Doesn't check if max number of key-value pairs is reached
-		 * That should be checked for and dealt with before calling this method
-		 * @param data - the key of the key-value pair
-		 * @param frequency - the frequency of the key
-		 */
-		public void addKeyPair(long data, int frequency) 
-		{
-			if (numKeys == 0) {
-				//first key-value pair in node
-				nodePairs[0] = new NodeObject(data, frequency);
-			}
-			else {
-				int i = numKeys;
-				//find spot for the new key-value pair
-				while (i > -1 && data < nodePairs[i].getKey()) {
-					nodePairs[i+1] = nodePairs[i];
-					i--;
-				}
-				nodePairs[i] = new NodeObject(data, frequency);
-			}
-			numKeys++;
 		}
 		
 		/**
@@ -278,6 +291,22 @@ public class BTree
 		 */
 		public void setChild(int x, int i) 
 		{
+			children[i] = x;
+		}
+		
+		/**
+		 * Adding a new child at index i
+		 * Assuming that the node has space for more children
+		 * @param x - position of new child
+		 * @param i - index of new child
+		 */
+		public void addChild(int x, int i) 
+		{
+			//move other children over
+			for (int j = 2 * degree; j > i; j--)
+			{
+				children[j] = children[j-1];
+			}
 			children[i] = x;
 		}
 		
@@ -344,6 +373,34 @@ public class BTree
 		public void setKeyPair(int i, NodeObject pair) 
 		{
 			nodePairs[i] = pair;
+		}
+		
+		/**
+		 * Adds a key-value pair to the node
+		 * Doesn't check if max number of key-value pairs is reached
+		 * That should be checked for and dealt with before calling this method
+		 * @param data - the key of the key-value pair
+		 * @param frequency - the frequency of the key
+		 */
+		public int addKeyPair(NodeObject pair) 
+		{
+			int i = 0;  //spot key-value pair is added
+			if (numKeys == 0) {
+				//first key-value pair in node
+				nodePairs[0] = pair;
+			}
+			else {
+				i = numKeys;
+				//find spot for the new key-value pair
+				//TODO might need to compare differently
+				while (i > -1 && pair.getKey() < nodePairs[i].getKey()) {
+					nodePairs[i+1] = nodePairs[i];
+					i--;
+				}
+				nodePairs[i] = pair;
+			}
+			numKeys++;
+			return i;
 		}
 		
 		/**

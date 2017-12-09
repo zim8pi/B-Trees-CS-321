@@ -30,7 +30,7 @@ private int children;
 		
 		try {
 			long data = rmFile.readLong();
-			this.node.addKeyPair(data, rmFile.readInt());
+			this.node.addKeyPair(new NodeObject(data, rmFile.readInt()));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
