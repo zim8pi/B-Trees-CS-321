@@ -18,8 +18,8 @@ public class NodeObject{
 	/**
 	 * @param key the key to set
 	 */
-	public void setKey(long key) {
-		this.key = key;
+	public void setKey(long k) {
+		key = k;
 	}
 	/**
 	 * @return the frequency
@@ -30,8 +30,8 @@ public class NodeObject{
 	/**
 	 * @param frequency the frequency to set
 	 */
-	public void setFrequency(int frequency) {
-		this.frequency = frequency;
+	public void setFrequency(int f) {
+		frequency = f;
 	}
 	
 	

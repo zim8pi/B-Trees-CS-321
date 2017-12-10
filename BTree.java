@@ -11,18 +11,17 @@ public class BTree
 	private static int bTreeNodeByteSize;  //space each BTreeNode takes in the file - holds nodePairs, children, parent, leaf and numKeys
 	private int numOfNodes;  //number of nodes in the tree - used to determine position of new nodes
 	private MemoryAccess rm;
-	private File file;
 	
 	
-	public BTree(File file, int d, int s) 
+	public BTree(String fileName, int d, int length) 
 	{
-		this.file = file;
-		rm = new MemoryAccess(file, degree);
+		rm = new MemoryAccess(fileName, degree);
 		degree = d;
-		sequenceLength = s;
+		sequenceLength = length;
 		bTreeByteSize = 32 * d + 5;
 		bTreeNodeByteSize = 32 * d - 3;	
 		numOfNodes = 0;
+		bTreeCreate();
 	}
 	
 	/**
@@ -31,6 +30,21 @@ public class BTree
 	public BTreeNode getRoot()
 	{
 		return root;
+	}
+	
+	public int getDegree()
+	{
+		return degree;
+	}
+	
+	public int getSequenceLength()
+	{
+		return sequenceLength;
+	}
+	
+	public int getNumOfNodes()
+	{
+		return numOfNodes;
 	}
 	
 	/**
@@ -92,17 +106,14 @@ public class BTree
 			if (x.getNumKeys() < 2 * degree - 1)
 			{
 				x.addKeyPair(k);
-				try {
-					rm.writeNode(x);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				rm.writeNode(x, x.getPosition());
+				rm.writeBTreeData(degree, sequenceLength, root);
+				
 			}
 			else
 			{
 				bTreeSplitNode(x.getPosition());
-				bTreeInsertNonFull(x, k);
+				bTreeInsertNonFull(rm.readNode(x.getParent()), k);
 			}
 		}
 		else 
@@ -123,7 +134,7 @@ public class BTree
 			{
 				bTreeInsertNonFull(child, k);
 			}
-		}		
+		}	
 	}
 	
 //	//Do we even need this method????
@@ -177,15 +188,10 @@ public class BTree
 	public void bTreeCreate() 
 	{
 		BTreeNode x = new BTreeNode(degree, -1, numOfNodes, true);
-		rm.allocateNode();
-		try {
-			rm.writeNode(x);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		root = x;
 		numOfNodes++;
+		rm.writeBTreeData(degree, sequenceLength, root);
+		rm.writeNode(x, x.getPosition());
 	}
 	
 	/**
@@ -242,15 +248,9 @@ public class BTree
 		splittingNode.setAllKeyPairs(Arrays.copyOfRange(splittingNode.getAllKeyPairs(), 0, (int) Math.floor(splittingNode.getNumKeys() / 2)));		
 		splittingNode.setNumKeys((int) Math.floor(splittingNode.getNumKeys() / 2));
 		
-
-		try {
-			rm.writeNode(right);
-			rm.writeNode(parent);
-			rm.writeNode(splittingNode);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		rm.writeNode(right, right.getPosition());
+		rm.writeNode(parent, parent.getPosition());
+		rm.writeNode(splittingNode, splittingNode.getPosition());
 	}
 	
 	
@@ -274,14 +274,15 @@ public class BTree
 		 * @param spot - position of the node
 		 * @param l - if node is a leaf
 		 */
-		public int getNodeSize(){
-			return bTreeNodeByteSize;
-		}
 		public BTreeNode(int d, int dad, int spot, boolean l) 
 		{
 			degree = d;
 			parent = dad;
-			nodePairs = new NodeObject[9];
+			nodePairs = new NodeObject[2 * d - 1];
+			for (int i = 0; i < (2 * d) - 1; i++)
+			{
+				nodePairs[i] = new NodeObject(-1, -1);
+			}
 			children = new int[2 * d];
 			for (int i = 0; i < 2 * d; i++)
 			{
@@ -413,17 +414,19 @@ public class BTree
 			int i = 0;  //spot key-value pair is added
 			if (numKeys == 0) {
 				//first key-value pair in node
-				nodePairs[0] = pair;
+				System.out.println("Inside addKeyPair in numKeys=0");
+				nodePairs[0] = new NodeObject(pair.getKey(), pair.getFrequency());				
 			}
 			else {
 				i = numKeys;
 				//find spot for the new key-value pair
 				//TODO might need to compare differently
+				System.out.println("Inside addKeyPair in else");
 				while (i > -1 && pair.getKey() < nodePairs[i].getKey()) {
 					nodePairs[i+1] = nodePairs[i];
 					i--;
 				}
-				nodePairs[i] = pair;
+				nodePairs[i] = new NodeObject(pair.getKey(), pair.getFrequency());
 			}
 			numKeys++;
 			return i;
