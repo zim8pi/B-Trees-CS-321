@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
 public class BTree 
@@ -7,7 +8,7 @@ public class BTree
 	private int sequenceLength;
 	private BTreeNode root;
 	private int bTreeByteSize;  //space BTree takes in the file - holds degree, sequenceLength and root
-	private int bTreeNodeByteSize;  //space each BTreeNode takes in the file - holds nodePairs, children, parent, leaf and numKeys
+	private static int bTreeNodeByteSize;  //space each BTreeNode takes in the file - holds nodePairs, children, parent, leaf and numKeys
 	private int numOfNodes;  //number of nodes in the tree - used to determine position of new nodes
 	private MemoryAccess rm;
 	private File file;
@@ -81,9 +82,8 @@ public class BTree
 	 * @param x - BTreeNode key is inserted into
 	 * @param k - NodeObject being inserted
 	 */
-	public void bTreeInsertNonFull(int p, NodeObject k) 
+	public void bTreeInsertNonFull(BTreeNode x, NodeObject k) 
 	{
-		BTreeNode x = rm.readNode(p);
 		int i = x.getNumKeys() - 1;
 		
 		if(x.isLeaf()) 
@@ -92,12 +92,17 @@ public class BTree
 			if (x.getNumKeys() < 2 * degree - 1)
 			{
 				x.addKeyPair(k);
-				rm.writeNode(x);
+				try {
+					rm.writeNode(x);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 			else
 			{
 				bTreeSplitNode(x.getPosition());
-				bTreeInsertNonFull(x.getParent(), k);
+				bTreeInsertNonFull(x, k);
 			}
 		}
 		else 
@@ -112,67 +117,73 @@ public class BTree
 			if(child.getNumKeys() == (2*degree - 1)) 
 			{
 				bTreeSplitNode(child.getPosition());
-				bTreeInsertNonFull(x.getPosition(), k);
+				bTreeInsertNonFull(x, k);
 			}
 			else
 			{
-				bTreeInsertNonFull(child.getPosition(), k);
+				bTreeInsertNonFull(child, k);
 			}
 		}		
 	}
 	
-	//Do we even need this method????
-	public void bTreeInsert(BTree T, NodeObject key) 
-	{
-		BTreeNode r = T.getRoot();
-		
-		//root is full
-		if (r.getNumKeys() == (2 * degree - 1)) 
-		{
-			//split root
-			BTreeNode left = new BTreeNode(degree, r.getPosition(), numOfNodes, true);
-			numOfNodes++;
-			BTreeNode right = new BTreeNode(degree, r.getPosition(), numOfNodes, true);
-			numOfNodes++;
-			r.setLeaf(false);
-						
-			left.setChildren(Arrays.copyOfRange(r.getChildren(), 0, (r.getNumKeys() / 2) - 1));
-			left.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), 0, (r.getNumKeys() / 2) - 1));
-			right.setChildren(Arrays.copyOfRange(r.getChildren(), r.getNumKeys() / 2, r.getNumKeys()));
-			right.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), r.getNumKeys() / 2, r.getNumKeys()));
-			int[] temp = new int[2];
-			temp[0] = left.getPosition();
-			temp[1] = right.getPosition();
-			r.setChildren(temp);
-//			r.setChildren(Arrays.copyOfRange(r.getChildren(), (r.getNumKeys() / 2) - 1, r.getNumKeys() / 2));
-			r.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), (r.getNumKeys() / 2) - 1, r.getNumKeys() / 2));
-//			r.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), r.getNumKeys() / 2, r.getNumKeys()));
-						
-			
-//			s = rm.allocateNode();
-//			T.root = s;
-//			s.setPosition(0);
-//			s.setLeaf(false);
-//			s.setNumKeys(0);
-//			s.setChilden();
-			r.setParent(-1);
-			r.setPosition(0);
-			bTreeSplitNode(r.getPosition());
-			bTreeInsertNonFull(r.getPosition(), key);
-		}
-		else 
-		{
-			bTreeInsertNonFull(r.getPosition(), key);
-		}
-	}
+//	//Do we even need this method????
+//	public void bTreeInsert(BTree T, NodeObject key) 
+//	{
+//		BTreeNode r = T.getRoot();
+//		
+//		//root is full
+//		if (r.getNumKeys() == (2 * degree - 1)) 
+//		{
+//			//split root
+//			BTreeNode left = new BTreeNode(degree, r.getPosition(), numOfNodes, true);
+//			numOfNodes++;
+//			BTreeNode right = new BTreeNode(degree, r.getPosition(), numOfNodes, true);
+//			numOfNodes++;
+//			r.setLeaf(false);
+//						
+//			left.setChildren(Arrays.copyOfRange(r.getChildren(), 0, (r.getNumKeys() / 2) - 1));
+//			left.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), 0, (r.getNumKeys() / 2) - 1));
+//			right.setChildren(Arrays.copyOfRange(r.getChildren(), r.getNumKeys() / 2, r.getNumKeys()));
+//			right.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), r.getNumKeys() / 2, r.getNumKeys()));
+//			int[] temp = new int[2];
+//			temp[0] = left.getPosition();
+//			temp[1] = right.getPosition();
+//			r.setChildren(temp);
+////			r.setChildren(Arrays.copyOfRange(r.getChildren(), (r.getNumKeys() / 2) - 1, r.getNumKeys() / 2));
+//			r.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), (r.getNumKeys() / 2) - 1, r.getNumKeys() / 2));
+////			r.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), r.getNumKeys() / 2, r.getNumKeys()));
+//						
+//			
+////			s = rm.allocateNode();
+////			T.root = s;
+////			s.setPosition(0);
+////			s.setLeaf(false);
+////			s.setNumKeys(0);
+////			s.setChilden();
+//			r.setParent(-1);
+//			r.setPosition(0);
+//			bTreeSplitNode(r.getPosition());
+//			bTreeInsertNonFull(r.getPosition(), key);
+//		}
+//		else 
+//		{
+//			bTreeInsertNonFull(r.getPosition(), key);
+//		}
+//	}
 	
 	/**
 	 * Creates an empty root node
 	 */
-	public void bTreeCreate() {
+	public void bTreeCreate() 
+	{
 		BTreeNode x = new BTreeNode(degree, -1, numOfNodes, true);
-		x = rm.allocateNode();
-		rm.writeNode(x);
+		rm.allocateNode();
+		try {
+			rm.writeNode(x);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		root = x;
 		numOfNodes++;
 	}
@@ -181,8 +192,10 @@ public class BTree
 	 * Splitss a node
 	 * @param nodePosition - position of the node being split
 	 */
-	public void bTreeSplitNode(int nodePosition) {	
+	public void bTreeSplitNode(int nodePosition) 
+	{	
 		BTreeNode splittingNode = rm.readNode(nodePosition);  //node that is being split
+		BTreeNode parent;
 				
 		//get the new node - will be directly to the right of the split node
 		BTreeNode right = new BTreeNode(degree, splittingNode.getParent(), numOfNodes, true);
@@ -200,7 +213,7 @@ public class BTree
 		//if split node is not the root
 		if (splittingNode.getParent() != -1)
 		{
-			BTreeNode parent = rm.readNode(splittingNode.getParent());  //node's parent
+			parent = rm.readNode(splittingNode.getParent());  //node's parent
 			
 			//if parent is full
 			if (parent.getNumKeys() >= (2 * degree) - 1)
@@ -215,7 +228,7 @@ public class BTree
 		}
 		else
 		{
-			BTreeNode parent = new BTreeNode(degree, -1, numOfNodes, false);
+			parent = new BTreeNode(degree, -1, numOfNodes, false);
 			numOfNodes++;
 			root = parent;
 			splittingNode.setParent(parent.getPosition());
@@ -228,6 +241,16 @@ public class BTree
 		splittingNode.setChildren(Arrays.copyOfRange(splittingNode.getChildren(), 0, (int) Math.floor(splittingNode.getNumKeys() / 2)));
 		splittingNode.setAllKeyPairs(Arrays.copyOfRange(splittingNode.getAllKeyPairs(), 0, (int) Math.floor(splittingNode.getNumKeys() / 2)));		
 		splittingNode.setNumKeys((int) Math.floor(splittingNode.getNumKeys() / 2));
+		
+
+		try {
+			rm.writeNode(right);
+			rm.writeNode(parent);
+			rm.writeNode(splittingNode);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	
@@ -251,11 +274,14 @@ public class BTree
 		 * @param spot - position of the node
 		 * @param l - if node is a leaf
 		 */
+		public int getNodeSize(){
+			return bTreeNodeByteSize;
+		}
 		public BTreeNode(int d, int dad, int spot, boolean l) 
 		{
 			degree = d;
 			parent = dad;
-			nodePairs = new NodeObject[2 * d - 1];
+			nodePairs = new NodeObject[9];
 			children = new int[2 * d];
 			for (int i = 0; i < 2 * d; i++)
 			{
