@@ -1,3 +1,5 @@
+import java.io.File;
+
 
 public class GeneBankSearch {
 
@@ -6,6 +8,9 @@ public class GeneBankSearch {
 	private static String queryFile;
 	private static long cacheSize;
 	private static int debugLevel;
+	private static boolean itDoes;
+	private static String howMany = "Frequency = ";
+	private static MemoryAccess rm;
 	
 	/**
 	 * Deal with the arguments the user gives
@@ -111,6 +116,32 @@ public class GeneBankSearch {
 		
 		//get arguments for program
 		dealWithArgs(args);
+		rm = new MemoryAccess(btreeFile, 5);
+		BTree tree = new BTree(queryFile, 5, 12);
+		BTree superTree = new BTree(btreeFile, 5, 12);
+		String results = "It appears " + doesItHave(superTree.getRoot(), tree.getRoot()) + " times.";
+		System.out.println(results);
+	}
+	
+	public static int doesItHave(BTree.BTreeNode node, BTree.BTreeNode compare){
+		int frequency = 0;
+		if(node.isLeaf()){
+			for(int i = 0; i < compare.getChildren().length; i++){
+				for(int j = 0; j < node.getChildren().length; j++){
+					if(compare.getKey(i) == node.getKey(j)){
+						frequency++;
+				}						
+				}
+				return frequency;
+			}
+		}
+		else{
+			for(int i = 0; i < node.getChildren().length; i++){
+				BTree.BTreeNode temp = rm.readNode(node.getChild(i));
+				frequency += doesItHave(temp, compare);
+			}
+		}
+		return frequency;
 	}
 
 }
