@@ -11,12 +11,14 @@ public class BTree
 	private static int bTreeNodeByteSize;  //space each BTreeNode takes in the file - holds nodePairs, children, parent, leaf and numKeys
 	private int numOfNodes;  //number of nodes in the tree - used to determine position of new nodes
 	private MemoryAccess rm;
-	
+	private String[] names = {"testing.txt", "pleasegodwork.txt", "thishadbetterwork.txt", "bettermakesure.txt"};
+	private int index = 0;
 	
 	public BTree(String fileName, int d, int length) 
 	{
-		rm = new MemoryAccess(fileName, degree);
 		degree = d;
+		index++;
+		rm = new MemoryAccess(names[index], degree);
 		sequenceLength = length;
 		bTreeByteSize = 32 * d + 5;
 		bTreeNodeByteSize = 32 * d - 3;	
@@ -30,6 +32,10 @@ public class BTree
 	public BTreeNode getRoot()
 	{
 		return root;
+	}
+	
+	public void setRoot(BTreeNode temp){
+		root = temp;
 	}
 	
 	public int getDegree()

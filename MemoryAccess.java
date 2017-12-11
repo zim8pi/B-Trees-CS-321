@@ -51,6 +51,7 @@ public class MemoryAccess
 			randomFile.seek(0);
 			randomFile.writeInt(degree);
 			randomFile.writeInt(sequenceLength);
+			randomFile.seek(4);
 			
 			//write in the root
 			//write in key-value pairs
@@ -115,7 +116,7 @@ public class MemoryAccess
 			for (int i = 0; i < 2 * degree; i++)
 			{
 				randomFile.writeInt(node.getChild(i));
-			}			
+			}
 			randomFile.writeBoolean(node.isLeaf());
 			randomFile.writeInt(node.getNumKeys());		
 		} 
@@ -179,10 +180,9 @@ public class MemoryAccess
 	
 	public BTree readTree()
 	{
-		BTree tree = new BTree(file, degree, 0);
 		BTree.BTreeNode root = new BTree.BTreeNode(degree, -2, -2, false);
 		int treeDegree;
-		int sequenceLength;
+		int sequenceLength = 0;
 		NodeObject[] pairs = new NodeObject[2 * degree - 1];
 		long key;
 		int frequency;
@@ -236,6 +236,8 @@ public class MemoryAccess
 			System.out.println("MemoryAccess - readNode");
 			e.printStackTrace();
 		}
+		BTree tree = new BTree(file, degree, sequenceLength);
+		tree.setRoot(root);
 		return tree;
 	}
 	

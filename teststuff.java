@@ -19,7 +19,7 @@ public class teststuff {
 		
 		MemoryAccess ma = new MemoryAccess(fileName, degree);
 		BTree tree = new BTree(fileName, degree, sequenceLength);
-		long key = 00111001;
+		long key = 0b00111001;
 		NodeObject pair = new NodeObject(key, 2);
 		tree.bTreeInsertNonFull(tree.getRoot(), pair);		
 		
@@ -36,7 +36,7 @@ public class teststuff {
 				"\nroot position (0):"+tree2.getRoot().getPosition() +
 				"\nroot parent (-1):"+tree2.getRoot().getParent() +
 				"\nroot numKeys (1):"+tree2.getRoot().getNumKeys() +
-				"\nroot pair (00111001, 2):"+key2+", "+frequency2);
+				"\nroot pair (00111001, 2):"+Long.toBinaryString(key2)+", "+frequency2);
 		
 		
 	}
