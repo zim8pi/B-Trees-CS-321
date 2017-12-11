@@ -2,8 +2,13 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Queue;
+import java.util.Stack;
 
+/**
+ * Parses through a given file
+ * Converts all ATCGs between 'ORIGIN' and '//' to binary
+ * @author Karan Davis, Ally Oliphant, Cybil Lesbyn
+ */
 public class ParsingFile {
 	
 	//stuff to read the file
@@ -13,14 +18,13 @@ public class ParsingFile {
 	//stuff for the sequences
 	private String[] character;
 	private StringBuilder subSequence;
-	private Queue<Long> allSequences;
+	private Stack<Long> allSequences = new Stack<Long>();
 	private int totalSequences = 0;  //will be the max size of the array DNA
 	private NodeObject[] DNA;  //all unique sequences from file with corresponding frequencies
 	
 	public ParsingFile()
 	{
 		//default constructor
-		//TODO does this need to do anything????
 	}
 	
 	
@@ -38,7 +42,6 @@ public class ParsingFile {
 			//read the file until the start of the DNA sequences
 			while ((line = buffer.readLine()) != null)
 			{
-				//TODO will the DNA sequences always start on the next line after ORIGIN????
 				if (line.contains("ORIGIN"))
 				{
 					break;
@@ -49,7 +52,6 @@ public class ParsingFile {
 			while ((line = buffer.readLine()) != null)
 			{
 				//end of DNA sequences has been reached
-				//TODO will the '//' always be on a separate line after the ATGC's????
 				if (line.contains("//"))
 				{
 					break;
@@ -59,8 +61,7 @@ public class ParsingFile {
 				character = line.split("");
 				
 				int i = 0;
-				//TODO should it be 'i < character.length()' instead of 'character[i] != null'?????
-				while (character[i] != null) 
+				while (i < character.length && character[i] != null) 
 				{
 					//if the character is relevant to what we are looking for 
 					if (character[i].equals("A") || character[i].equals("a") || 
@@ -98,15 +99,13 @@ public class ParsingFile {
 							case "n":
 								//reset the subSequence
 								subSequence = new StringBuilder(2*sequenceLength);
-								//TODO ATCGs between two 'N' that don't total the sequenceLength????
-								//ingore them??? add them??? what????
 								break;
 						}
 						
 						//add sequence to queue if it has hit max length
 						if (subSequence.length() == sequenceLength)
 						{
-							allSequences.add(Long.parseLong(subSequence.toString()));
+							allSequences.push(Long.parseLong(subSequence.toString()));
 							totalSequences++;
 						}
 					}
@@ -128,9 +127,9 @@ public class ParsingFile {
 		boolean needsToBeAdded;
 		
 		//while there are still sequences to be added
-		while (allSequences != null)
+		while (!allSequences.empty())
 		{
-			currentSequence = allSequences.remove();
+			currentSequence = allSequences.pop();
 			needsToBeAdded = true;
 			
 			//check if currentSequence is already in DNA
@@ -151,7 +150,7 @@ public class ParsingFile {
 			//currentSequence is not yet in DNA
 			if (needsToBeAdded)
 			{
-				DNA[DNASize + 1] = new NodeObject(currentSequence, 1);
+				DNA[DNASize] = new NodeObject(currentSequence, 1);
 				DNASize++;
 			}
 		}

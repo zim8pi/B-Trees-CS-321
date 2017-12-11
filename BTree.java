@@ -1,7 +1,9 @@
-import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 
+/**
+ * Class that represents a B-Tree
+ * @author Karan Davis, Ally Oliphant, Cybil Lesbyn
+ */
 public class BTree 
 {
 	private int degree;
@@ -14,6 +16,12 @@ public class BTree
 	private String[] names = {"testing.txt", "pleasegodwork.txt", "thishadbetterwork.txt", "bettermakesure.txt"};
 	private int index = 0;
 	
+	/**
+	 * Default constructor
+	 * @param fileName - name of file B-Tree will be stored to
+	 * @param d - degree of B-Tree
+	 * @param length - sequence length
+	 */
 	public BTree(String fileName, int d, int length) 
 	{
 		degree = d;
@@ -34,20 +42,36 @@ public class BTree
 		return root;
 	}
 	
+	/**
+	 * Set the root of B-Tree
+	 * @param temp
+	 */
 	public void setRoot(BTreeNode temp){
 		root = temp;
 	}
 	
+	/**
+	 * Get the B-Tree's degree
+	 * @return degree
+	 */
 	public int getDegree()
 	{
 		return degree;
 	}
 	
+	/**
+	 * Get the sequence length of the B-Tree
+	 * @return sequenceLength
+	 */
 	public int getSequenceLength()
 	{
 		return sequenceLength;
 	}
 	
+	/**
+	 * Get the number of BTreeNodes in the B-Tree
+	 * @return numOfNodes
+	 */
 	public int getNumOfNodes()
 	{
 		return numOfNodes;
@@ -143,51 +167,6 @@ public class BTree
 		}	
 	}
 	
-//	//Do we even need this method????
-//	public void bTreeInsert(BTree T, NodeObject key) 
-//	{
-//		BTreeNode r = T.getRoot();
-//		
-//		//root is full
-//		if (r.getNumKeys() == (2 * degree - 1)) 
-//		{
-//			//split root
-//			BTreeNode left = new BTreeNode(degree, r.getPosition(), numOfNodes, true);
-//			numOfNodes++;
-//			BTreeNode right = new BTreeNode(degree, r.getPosition(), numOfNodes, true);
-//			numOfNodes++;
-//			r.setLeaf(false);
-//						
-//			left.setChildren(Arrays.copyOfRange(r.getChildren(), 0, (r.getNumKeys() / 2) - 1));
-//			left.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), 0, (r.getNumKeys() / 2) - 1));
-//			right.setChildren(Arrays.copyOfRange(r.getChildren(), r.getNumKeys() / 2, r.getNumKeys()));
-//			right.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), r.getNumKeys() / 2, r.getNumKeys()));
-//			int[] temp = new int[2];
-//			temp[0] = left.getPosition();
-//			temp[1] = right.getPosition();
-//			r.setChildren(temp);
-////			r.setChildren(Arrays.copyOfRange(r.getChildren(), (r.getNumKeys() / 2) - 1, r.getNumKeys() / 2));
-//			r.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), (r.getNumKeys() / 2) - 1, r.getNumKeys() / 2));
-////			r.setAllKeyPairs(Arrays.copyOfRange(r.getAllKeyPairs(), r.getNumKeys() / 2, r.getNumKeys()));
-//						
-//			
-////			s = rm.allocateNode();
-////			T.root = s;
-////			s.setPosition(0);
-////			s.setLeaf(false);
-////			s.setNumKeys(0);
-////			s.setChilden();
-//			r.setParent(-1);
-//			r.setPosition(0);
-//			bTreeSplitNode(r.getPosition());
-//			bTreeInsertNonFull(r.getPosition(), key);
-//		}
-//		else 
-//		{
-//			bTreeInsertNonFull(r.getPosition(), key);
-//		}
-//	}
-	
 	/**
 	 * Creates an empty root node
 	 */
@@ -201,7 +180,7 @@ public class BTree
 	}
 	
 	/**
-	 * Splitss a node
+	 * Splits a node
 	 * @param nodePosition - position of the node being split
 	 */
 	public void bTreeSplitNode(int nodePosition) 
@@ -262,7 +241,10 @@ public class BTree
 	
 	
 	
-	//had to make it public for the MemoryAccess file.
+	/**
+	 * Class that represents a node in the B-Tree
+	 * @author Karan Davis, Ally Oliphant, Cybil Lesbyn
+	 */
 	public static class BTreeNode 
 	{
 		private NodeObject[] nodePairs;  //holds the key-value pairs
@@ -420,14 +402,11 @@ public class BTree
 			int i = 0;  //spot key-value pair is added
 			if (numKeys == 0) {
 				//first key-value pair in node
-				System.out.println("Inside addKeyPair in numKeys=0");
 				nodePairs[0] = new NodeObject(pair.getKey(), pair.getFrequency());				
 			}
 			else {
 				i = numKeys;
 				//find spot for the new key-value pair
-				//TODO might need to compare differently
-				System.out.println("Inside addKeyPair in else");
 				while (i > -1 && pair.getKey() < nodePairs[i].getKey()) {
 					nodePairs[i+1] = nodePairs[i];
 					i--;

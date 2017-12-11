@@ -1,4 +1,8 @@
-
+/**
+ * Driver class that searches through a given query
+ * to match against a given B-Tree file
+ * @author Karan Davis, Ally Oliphant, Cybil Lesbyn
+ */
 public class GeneBankSearch {
 
 	private static boolean withCache;

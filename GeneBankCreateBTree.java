@@ -1,4 +1,12 @@
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
+/**
+ * Driver class that creates a B-Tree and fills it with
+ * sequences from a given file
+ * @author Karan Davis, Ally Oliphant, Cybil Lesbyn
+ */
 public class GeneBankCreateBTree {
 
 	private static boolean withCache;
@@ -7,6 +15,10 @@ public class GeneBankCreateBTree {
 	private static int sequenceLength;
 	private static long cacheSize;
 	private static int debugLevel = 0;  //default value is 0
+	
+	private static ParsingFile parseFile = new ParsingFile();
+	private static NodeObject[] keyPairs;
+	private static BTree tree;
 	
 	/**
 	 * Deal with the arguments the user gives
@@ -133,11 +145,68 @@ public class GeneBankCreateBTree {
 			System.exit(1);
 		}
 	}
-	
+		
+	/**
+	 * Get the information that needs to be in the dump file
+	 * @param pairs - NodeObject[]
+	 * @return String of information
+	 */
+	public static String printTree(NodeObject[] pairs)
+	{
+		String printThis = "";
+		
+		System.out.println(pairs.length);
+		
+		//insert sequences into tree
+		for (int i = 0; i < pairs.length; i++)
+		{
+			System.out.println(i);
+			printThis += "\n<"+pairs[i].getFrequency()+"> <"+pairs[i].getKey()+">";
+		}
+		
+		return printThis;
+	}
 	
 	public static void main(String[] args) {
 		
 		//get arguments for program
 		dealWithArgs(args);		
+		
+		keyPairs = parseFile.parseDNAFile(gdkFile, sequenceLength);
+		
+		String treeFileName = gdkFile + ".btree.data." + sequenceLength + "." + degree + ".";
+		tree = new BTree(treeFileName, degree, sequenceLength);
+		
+		//insert sequences into tree
+		for (int i = 0; i < keyPairs.length; i++)
+		{
+			tree.bTreeInsertNonFull(tree.getRoot(), keyPairs[i]);
+		}
+		
+		if (debugLevel == 1)
+		{
+			try 
+			{	
+				StringBuilder build = new StringBuilder();
+				
+				File file = new File("dump");
+				if (!file.exists())
+				{
+					file.createNewFile();
+				}	
+				
+				FileOutputStream out = new FileOutputStream(file);			
+				
+				build.append(printTree(keyPairs));			
+				byte[] linearByte = String.valueOf(build).getBytes();			
+				out.write(linearByte);
+				
+				out.close();
+			} 
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
 	}
 }
