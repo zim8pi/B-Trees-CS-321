@@ -1,8 +1,16 @@
-
+/**
+ * Class that holds a key-value pair for a B-Tree
+ * @author Karan Davis, Ally Oliphant, Cybil Lesbyn
+ */
 public class NodeObject{
 	private long key;
 	private int frequency;
 	
+	/**
+	 * Default constructor
+	 * @param k - key value
+	 * @param f - frequency value
+	 */
 	public NodeObject (long k, int f)
 	{
 		setKey(k);
@@ -33,7 +41,4 @@ public class NodeObject{
 	public void setFrequency(int f) {
 		frequency = f;
 	}
-	
-	
-
 }

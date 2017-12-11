@@ -20,6 +20,7 @@ INCLUDED FILES:
 	GeneBankSearch.java - source file
 	MemoryAccess.java - source file
 	ParsingFile.java - source file
+	NodeObject.java - source file
 	
 
 COMPILING AND RUNNING:
