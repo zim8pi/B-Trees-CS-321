@@ -1,14 +1,8 @@
-//<<<<<<< HEAD
-import java.io.File;
-
-
-//=======
 /**
  * Driver class that searches through a given query
  * to match against a given B-Tree file
  * @author Karan Davis, Ally Oliphant, Cybil Lesbyn
  */
-//>>>>>>> bdbedb27f736c2d273c8ab0ab3d32b9d057a5429
 public class GeneBankSearch {
 
 	private static boolean withCache;
@@ -131,20 +125,33 @@ public class GeneBankSearch {
 		System.out.println(results);
 	}
 	
-	public static int doesItHave(BTree.BTreeNode node, BTree.BTreeNode compare){
+	/**
+	 * Counts how many times compare equals node
+	 * @param node
+	 * @param compare
+	 * @return int
+	 */
+	public static int doesItHave(BTree.BTreeNode node, BTree.BTreeNode compare)
+	{
 		int frequency = 0;
-		if(node.isLeaf()){
-			for(int i = 0; i < compare.getChildren().length; i++){
-				for(int j = 0; j < node.getChildren().length; j++){
-					if(compare.getKey(i) == node.getKey(j)){
+		if(node.isLeaf())
+		{
+			for(int i = 0; i < compare.getChildren().length; i++)
+			{
+				for(int j = 0; j < node.getChildren().length; j++)
+				{
+					if(compare.getKey(i) == node.getKey(j))
+					{
 						frequency++;
-				}						
+					}						
 				}
 				return frequency;
 			}
 		}
-		else{
-			for(int i = 0; i < node.getChildren().length; i++){
+		else
+		{
+			for(int i = 0; i < node.getChildren().length; i++)
+			{
 				BTree.BTreeNode temp = rm.readNode(node.getChild(i));
 				frequency += doesItHave(temp, compare);
 			}
