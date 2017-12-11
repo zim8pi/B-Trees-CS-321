@@ -1,6 +1,14 @@
+//<<<<<<< HEAD
 import java.io.File;
 
 
+//=======
+/**
+ * Driver class that searches through a given query
+ * to match against a given B-Tree file
+ * @author Karan Davis, Ally Oliphant, Cybil Lesbyn
+ */
+//>>>>>>> bdbedb27f736c2d273c8ab0ab3d32b9d057a5429
 public class GeneBankSearch {
 
 	private static boolean withCache;
